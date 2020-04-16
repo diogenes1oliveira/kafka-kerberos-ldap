@@ -1,5 +1,20 @@
 # kafka-kerberos-ldap
 
-A Docker stack for a Kafka cluster, complete with Kerberos and LDAP authentication
+A Docker stack for a Kafka cluster, complete with Kerberos and LDAP
+authentication
 
-WARNING: this is not production-ready. Its primary use is to aid in local development.
+> :warning: **this code is definitely not production-ready!**: only use it in
+> local development.
+
+## Using
+
+The components are organized in several Docker Compose files, which can be
+deployed separately using the `-f` flag in `docker-compose` .
+
+You can also use the Makefile that is provided for convenience:
+
+``` sh
+$ make compose/up  # run
+$ make compose/rm  # destroy
+```
+

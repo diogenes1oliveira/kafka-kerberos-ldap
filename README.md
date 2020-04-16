@@ -3,7 +3,7 @@
 A Docker stack for a Kafka cluster, complete with Kerberos and LDAP
 authentication
 
-> :warning: **this code is definitely not production-ready!**: only use it in
+> :warning: **This code is definitely not production-ready!** Use it only for
 > local development.
 
 ## Using

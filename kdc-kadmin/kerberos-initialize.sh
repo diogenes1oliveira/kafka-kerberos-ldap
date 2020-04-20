@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-export KADMIN_PRINCIPAL_FULL="${KADMIN_PRINCIPAL}@${REALM}"
-export KDC_KADMIN_SERVER="kdc-kadmin.${REALM}"
+export KADMIN_PRINCIPAL_FULL="${KADMIN_PRINCIPAL}@${KERBEROS_REALM}"
+export KDC_KADMIN_SERVER="kdc-kadmin.${KERBEROS_REALM}"
 
 function info {
 	awk -v prefix="# (${1:-INFO}): " '{ print prefix $0 }' >&2
@@ -17,10 +17,10 @@ echo "KDC_KADMIN_SERVER: ${KDC_KADMIN_SERVER}" | info
 
 cat > /etc/krb5.conf <<EOF
 [libdefaults]
-	default_realm = ${REALM}
+	default_realm = ${KERBEROS_REALM}
 
 [realms]
-	${REALM} = {
+	${KERBEROS_REALM} = {
 		kdc_ports = 88,750
 		kadmind_port = 749
 		kdc = ${KDC_KADMIN_SERVER}
@@ -32,7 +32,7 @@ mkdir -p /etc/krb5kdc
 
 cat > /etc/krb5kdc/kdc.conf <<EOF
 [realms]
-	$REALM = {
+	${KERBEROS_REALM} = {
 		acl_file = /etc/krb5kdc/kadm5.acl
 		max_renewable_life = 7d 0h 0m 0s
 		supported_enctypes = ${SUPPORTED_ENCRYPTION_TYPES}
@@ -42,7 +42,7 @@ EOF
 
 cat > /etc/krb5kdc/kadm5.acl <<EOF
 ${KADMIN_PRINCIPAL_FULL} *
-noPermissions@${REALM} X
+noPermissions@${KERBEROS_REALM} X
 EOF
 
 echo "generating master password" | info
@@ -63,12 +63,12 @@ EOF
 kadmin.local -q "delete_principal -force ${KADMIN_PRINCIPAL_FULL}" 2>&1 | info 'kadmin'
 kadmin.local -q "addprinc -pw ${KADMIN_PASSWORD} ${KADMIN_PRINCIPAL_FULL}" 2>&1 | info 'kadmin'
 
-kadmin.local -q "delete_principal -force noPermissions@${REALM}" 2>&1 | info 'kadmin'
-kadmin.local -q "addprinc -pw ${KADMIN_PASSWORD} noPermissions@${REALM}" 2>&1 | info 'kadmin'
+kadmin.local -q "delete_principal -force noPermissions@${KERBEROS_REALM}" 2>&1 | info 'kadmin'
+kadmin.local -q "addprinc -pw ${KADMIN_PASSWORD} noPermissions@${KERBEROS_REALM}" 2>&1 | info 'kadmin'
 
 mkdir -p /var/lib/krb5kdc
 cat > /var/lib/krb5kdc/kadm5.acl <<EOF
-*/admin@${REALM} *
+*/admin@${KERBEROS_REALM} *
 EOF
 
 echo "Kerberos initialized" | info

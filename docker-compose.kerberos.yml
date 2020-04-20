@@ -2,14 +2,18 @@
 # KERBEROS_REALM=localhost
 # KADMIN_PASSWORD=password
 # KCLIENT_MAX_WAIT_TIME=30
+# KERBEROS_KDC_PORT=7088
+# KERBEROS_ADMIN_SERVER_PORT=7749
+# ZOOKEEPER_CLIENT_PORT=7181
 
 version: "3.6"
+
 services:
   kdc-kadmin:
     build:
       context: ./kdc-kadmin
     environment:
-      - REALM=${KERBEROS_REALM:-localhost}
+      - KERBEROS_REALM=${KERBEROS_REALM:-localhost}
       - SUPPORTED_ENCRYPTION_TYPES=aes256-cts-hmac-sha1-96:normal
       - KADMIN_PRINCIPAL=kadmin/admin
       - KADMIN_PASSWORD=${KADMIN_PASSWORD:-password}
@@ -19,23 +23,57 @@ services:
       cluster:
         aliases:
           - kdc-kadmin.${KERBEROS_REALM:-localhost}
+    ports:
+      - "${KERBEROS_KDC_PORT:-7088}:88/tcp"
+      - "${KERBEROS_KDC_PORT:-7088}:88/udp"
+      - "${KERBEROS_ADMIN_SERVER_PORT:-7749}:749"
+
   kerberos-client:
     build:
       context: ./kerberos-client
     environment:
-      - REALM=${KERBEROS_REALM:-localhost}
+      - KERBEROS_REALM=${KERBEROS_REALM:-localhost}
       - SUPPORTED_ENCRYPTION_TYPES=aes256-cts-hmac-sha1-96:normal
       - KADMIN_PRINCIPAL=kadmin/admin
       - KADMIN_PASSWORD=${KADMIN_PASSWORD:-password}
+      - KERBEROS_PRINCIPAL_PASSWORD=${KERBEROS_PRINCIPAL_PASSWORD:-password}
       - KCLIENT_MAX_WAIT_TIME=${KCLIENT_MAX_WAIT_TIME:-30}
+      - KERBEROS_KEYTABS=zookeeper
     depends_on:
       - kdc-kadmin
     networks:
       cluster:
         aliases:
           - kerberos-client.${KERBEROS_REALM:-localhost}
+    volumes:
+      - type: volume
+        source: keytabs
+        target: /etc/security/keytabs
+
+  zookeeper:
+    build:
+      context: ./zookeeper
+    environment:
+      - KERBEROS_REALM=${KERBEROS_REALM:-localhost}
+      - WAIT_SUCCESS_MAX_WAIT_TIME=3000
+      - ZOOKEEPER_CLIENT_PORT=2181
+    ports:
+      - "${ZOOKEEPER_CLIENT_PORT:-7181}:2181"
+    networks:
+      cluster:
+        aliases:
+          - zookeeper.${KERBEROS_REALM:-localhost}
+    volumes:
+      - type: volume
+        source: keytabs
+        target: /etc/security/keytabs
 
 networks:
   cluster:
     name: ${DOCKER_NETWORK_NAME:-local-cluster-kafka}
+    external: true
+
+volumes:
+  keytabs:
+    name: ${DOCKER_KEYTAB_VOLUME:-local-keytabs-volume}
     external: true

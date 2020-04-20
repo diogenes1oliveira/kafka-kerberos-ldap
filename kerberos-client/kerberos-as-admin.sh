@@ -3,7 +3,7 @@
 set -euo pipefail
 
 export KADMIN_PRINCIPAL="${KADMIN_PRINCIPAL:-kadmin/admin}"
-export KADMIN_PRINCIPAL_FULL="${KADMIN_PRINCIPAL}@${REALM}"
+export KADMIN_PRINCIPAL_FULL="${KADMIN_PRINCIPAL}@${KERBEROS_REALM}"
 export KCLIENT_MAX_WAIT_TIME="${KCLIENT_MAX_WAIT_TIME:-30}"
 
 function info {
@@ -33,4 +33,4 @@ if [ "${1:-}" = "--wait" ]; then
   exit 0
 fi
 
-kadmin -p "${KADMIN_PRINCIPAL_FULL}" -w "${KADMIN_PASSWORD}" -q "$1"
+kadmin -p "${KADMIN_PRINCIPAL_FULL}" -w "${KADMIN_PASSWORD}" "$@"
